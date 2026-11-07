@@ -1,4 +1,4 @@
-const API_BASE = "https://rs-vjezbe-backend-et8n.onrender.com/";
+const API_BASE = "https://rs-vjezbe-backend-et8n.onrender.com";
 const NOTE_COLORS = ["var(--paper-1)", "var(--paper-2)", "var(--paper-3)", "var(--paper-4)", "var(--paper-5)"];
 
 const noteTextEl = document.getElementById("noteText");
