@@ -1,4 +1,4 @@
-const STORAGE_KEY = "postit_wall_notes_v1";
+const API_BASE = "https://rs-vjezbe-backend-et8n.onrender.com/";
 const NOTE_COLORS = ["var(--paper-1)", "var(--paper-2)", "var(--paper-3)", "var(--paper-4)", "var(--paper-5)"];
 
 const noteTextEl = document.getElementById("noteText");
@@ -7,8 +7,9 @@ const notesGridEl = document.getElementById("notesGrid");
 const noteCountEl = document.getElementById("noteCount");
 const formHintEl = document.getElementById("formHint");
 
-let notes = loadNotes();
+let notes = [];
 renderNotes();
+loadNotes();
 
 addBtnEl.addEventListener("click", addNote);
 noteTextEl.addEventListener("keydown", (event) => {
@@ -24,12 +25,10 @@ notesGridEl.addEventListener("click", (event) => {
   }
 
   const id = Number(deleteBtn.dataset.id);
-  notes = notes.filter((note) => note.id !== id);
-  saveNotes();
-  renderNotes();
+  deleteNote(id);
 });
 
-function addNote() {
+async function addNote() {
   const text = noteTextEl.value.trim();
   if (!text) {
     setHint("Type a note before pinning it.");
@@ -37,20 +36,31 @@ function addNote() {
     return;
   }
 
-  const note = {
-    id: Date.now(),
-    text,
-    createdAt: new Date().toISOString(),
-    color: NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)],
-    tilt: `${Math.floor(Math.random() * 7) - 3}deg`,
-  };
+  try {
+    addBtnEl.disabled = true;
+    const response = await fetch(`${API_BASE}/notes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
 
-  notes.unshift(note);
-  saveNotes();
-  renderNotes();
+    if (!response.ok) {
+      throw new Error("Failed to create note.");
+    }
 
-  noteTextEl.value = "";
-  setHint("Note pinned.");
+    const created = await response.json();
+    notes.unshift(created);
+    renderNotes();
+
+    noteTextEl.value = "";
+    setHint("Note pinned.");
+  } catch {
+    setHint("Could not save note. Check API_BASE and backend status.");
+  } finally {
+    addBtnEl.disabled = false;
+  }
 }
 
 function renderNotes() {
@@ -64,8 +74,9 @@ function renderNotes() {
   notesGridEl.innerHTML = notes
     .map((note) => {
       const dateLabel = new Date(note.createdAt).toLocaleString();
+      const style = getNoteStyle(note.id);
       return `
-        <article class="note" style="background:${note.color};--tilt:${note.tilt}">
+        <article class="note" style="background:${style.color};--tilt:${style.tilt}">
           <button class="delete-btn" data-id="${note.id}" aria-label="Delete note">x</button>
           <p>${escapeHtml(note.text)}</p>
           <time datetime="${note.createdAt}">${dateLabel}</time>
@@ -79,22 +90,46 @@ function setHint(message) {
   formHintEl.textContent = message;
 }
 
-function loadNotes() {
+async function loadNotes() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return [];
+    const response = await fetch(`${API_BASE}/notes`);
+    if (!response.ok) {
+      throw new Error("Failed to load notes.");
     }
-
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const data = await response.json();
+    notes = Array.isArray(data) ? data : [];
+    renderNotes();
+    setHint("Notes loaded from backend.");
   } catch {
-    return [];
+    notes = [];
+    renderNotes();
+    setHint("Could not load notes. Check API_BASE and backend status.");
   }
 }
 
-function saveNotes() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+async function deleteNote(id) {
+  try {
+    const response = await fetch(`${API_BASE}/notes/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete note.");
+    }
+
+    notes = notes.filter((note) => note.id !== id);
+    renderNotes();
+    setHint("Note removed.");
+  } catch {
+    setHint("Could not delete note. Check API_BASE and backend status.");
+  }
+}
+
+function getNoteStyle(id) {
+  const safeId = Number.isFinite(Number(id)) ? Number(id) : 1;
+  const color = NOTE_COLORS[Math.abs(safeId) % NOTE_COLORS.length];
+  const tilt = `${((Math.abs(safeId) % 7) - 3).toString()}deg`;
+  return { color, tilt };
 }
 
 function escapeHtml(text) {
