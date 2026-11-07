@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post-it Wall</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Patrick+Hand&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="bg-shape bg-shape-one" aria-hidden="true"></div>
+    <div class="bg-shape bg-shape-two" aria-hidden="true"></div>
+
+    <main class="app">
+      <header class="hero">
+        <p class="eyebrow">Mini board</p>
+        <h1>Post-it Wall</h1>
+        <p class="subtitle">Capture quick thoughts, keep only what matters.</p>
+      </header>
+
+      <section class="composer" aria-label="Create a new note">
+        <label for="noteText" class="composer-label">New note</label>
+        <div class="composer-row">
+          <textarea
+            id="noteText"
+            maxlength="240"
+            placeholder="Write a short note..."
+          ></textarea>
+          <button id="addBtn" type="button">Pin note</button>
+        </div>
+        <p id="formHint" class="hint" aria-live="polite"></p>
+      </section>
+
+      <section>
+        <div class="board-head">
+          <h2>Your notes</h2>
+          <p id="noteCount" class="note-count">0 notes</p>
+        </div>
+        <div id="notesGrid" class="notes-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
